@@ -1,2 +1,0 @@
-# EncuestaTrabajadores
-encuesta
