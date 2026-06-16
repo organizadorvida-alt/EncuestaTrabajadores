@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación de Clima Laboral - Frutería</title>
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --secondary: #40916c;
+            --bg: #f8f9fa;
+            --text: #212529;
+            --border: #dee2e6;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 16px; /* Tamaño legible y profesional */
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .meta-info {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        select, input[type="date"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .question-block {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: none; /* Oculto hasta elegir cargo */
+        }
+
+        .question-block.active {
+            display: block;
+        }
+
+        .question-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .radio-option:hover {
+            background-color: #f1f3f5;
+            border-color: var(--secondary);
+        }
+
+        .radio-option input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border);
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-secondary { background-color: var(--secondary); color: white; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-warning { background-color: var(--warning); color: #212529; }
+        .btn-admin { background-color: #495057; color: white; margin-top: 40px; font-size: 14px; }
+
+        /* Sección de Resultados */
+        #results-section {
+            display: none;
+            background: #e9ecef;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 2px solid var(--primary);
+        }
+
+        .score-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .action-plan {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .action-plan h4 { margin-top: 0; color: var(--danger); }
+
+        /* Base de Datos Admin */
+        #admin-panel {
+            display: none;
+            margin-top: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            text-align: left;
+        }
+
+        th { background-color: var(--primary); color: white; }
+
+        /* ESTILOS DE IMPRESIÓN (PDF) */
+        @media print {
+            body { background: white; padding: 0; max-width: 100%; }
+            .btn-container, .btn-admin, #admin-panel { display: none !important; }
+            .header { box-shadow: none; border: 1px solid #000; }
+            .question-block { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+            #results-section { display: block !important; border: 2px solid #000; }
+            textarea { border: none; resize: none; overflow: hidden; }
+            .no-print { display: none; }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <h2 style="margin-top: 0; color: var(--primary);">Evaluación de Conexión y Clima Laboral</h2>
+        <p style="margin-bottom: 0; color: #666;">Este formulario es anónimo. Sus respuestas ayudan a mejorar las condiciones de trabajo.</p>
+        
+        <div class="meta-info">
+            <div class="form-group" style="flex: 1;">
+                <label>Código de Registro:</label>
+                <input type="text" id="record-id" readonly style="background: #e9ecef; font-weight: bold; color: var(--primary);">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Fecha:</label>
+                <input type="date" id="record-date" readonly>
+            </div>
+            <div class="form-group" style="flex: 2;">
+                <label>Seleccione su Cargo:</label>
+                <select id="role-select" onchange="loadQuestions()">
+                    <option value="">-- Seleccionar Cargo --</option>
+                    <option value="cajera">Cajera</option>
+                    <option value="frutero">Frutero / Exhibidor</option>
+                    <option value="limpieza">Limpieza</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <form id="survey-form">
+        <!-- Las preguntas se inyectan aquí dinámicamente -->
+        <div id="questions-container"></div>
+
+        <div class="btn-container no-print">
+            <button type="button" class="btn-primary" onclick="saveData()">💾 Guardar Progreso</button>
+            <button type="button" class="btn-secondary" onclick="finalizeSurvey()">✅ Finalizar y Ver Análisis</button>
+            <button type="button" class="btn-warning" onclick="editData()">✏️ Editar Último</button>
+            <button type="button" class="btn-danger" onclick="clearForm()">🗑️ Borrar Todo</button>
+            <button type="button" class="btn-secondary" onclick="window.print()">🖨️ Guardar como PDF</button>
+        </div>
+    </form>
+
+    <!-- Sección de Resultados (Oculta hasta finalizar) -->
+    <div id="results-section">
+        <h3 style="margin-top: 0; color: var(--primary);">📊 Análisis de Respuestas</h3>
+        <div class="score-display" id="score-display">Puntaje de Bienestar: --/5</div>
+        <p id="qualitative-summary"></p>
+        
+        <div class="action-plan">
+            <h4>🎯 Acciones Recomendadas para la Gerencia:</h4>
+            <ul id="action-list"></ul>
+        </div>
+        <p style="font-size: 12px; color: #666; margin-top: 20px;">
+            * Este análisis se genera automáticamente basado en patrones de respuesta. No identifica al trabajador.
+        </p>
+    </div>
+
+    <!-- Panel de Administrador (Base de Datos) -->
+    <button class="btn-admin no-print" onclick="toggleAdmin()">🔒 Ver Base de Datos de Registros</button>
+    
+    <div id="admin-panel">
+        <h3>Base de Datos de Encuestas</h3>
+        <button class="btn-danger no-print" onclick="clearAllData()" style="margin-bottom: 15px; font-size: 14px;">⚠️ Borrar Toda la Base de Datos</button>
+        <table id="db-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cargo</th>
+                    <th>Puntaje</th>
+                    <th>Respuestas Clave</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="db-tbody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- BASE DE DATOS DE PREGUNTAS ---
+        const questionsDB = {
+            cajera: [
+                {
+                    id: 'c1', type: 'radio', score: true,
+                    text: '1. Al finalizar tu turno en la caja, ¿con qué sensación te vas a casa la mayoría de los días?',
+                    options: [
+                        { val: 5, text: 'Tranquila y satisfecha con mi trabajo' },
+                        { val: 3, text: 'Normal, fue un día más, sin mayores novedades' },
+                        { val: 1, text: 'Agotada, estresada o con los nervios de punta' }
+                    ]
+                },
+                {
+                    id: 'c2', type: 'radio', score: true,
+                    text: '2. ¿Cómo te sientes por dentro cuando un cliente es maleducado o te habla en un tono fuerte?',
+                    options: [
+                        { val: 4, text: 'Lo dejo pasar, entiendo que no es algo personal' },
+                        { val: 2, text: 'Me afecta, pero intento mantener la compostura' },
+                        { val: 1, text: 'Me siento atacada y me cuesta mucho no responder mal' }
+                    ]
+                },
+                {
+                    id: 'c3', type: 'radio', score: true,
+                    text: '3. Hay cola, hace calor y un cliente se queja agresivamente porque la atención va lenta. ¿Qué piensas en ese instante?',
+                    options: [
+                        { val: 4, text: 'Entiendo su molestia, el calor nos afecta a todos' },
+                        { val: 2, text: 'Siento que me faltan el respeto por algo que no controlo' },
+                        { val: 1, text: 'Solo quiero cobrarle rápido para que se vaya de una vez' }
+                    ]
+                },
+                {
+                    id: 'c4', type: 'radio', score: true,
+                    text: '4. Cuando ves entrar a un cliente que sabes que tiene "mal genio", ¿cómo lo atiendes?',
+                    options: [
+                        { val: 5, text: 'Uso mi mejor estrategia de calma y profesionalismo' },
+                        { val: 3, text: 'Hago el trabajo lo más rápido y cortante posible' },
+                        { val: 1, text: 'Evito mirarlo o dejo que un compañero lo atienda si puede' }
+                    ]
+                },
+                {
+                    id: 'c5', type: 'text',
+                    text: '5. ¿Te ha tratado mal algún cliente o persona de nuestro local recientemente? Describe brevemente cómo te hizo sentir.'
+                },
+                {
+                    id: 'c6', type: 'text',
+                    text: '6. Seamos sinceros: el estrés a veces nos gana. ¿Sientes que alguna vez has perdido la paciencia y contestado mal a un cliente o compañero? ¿Qué crees que lo detonó?'
+                }
+            ],
+            frutero: [
+                {
+                    id: 'f1', type: 'radio', score: true,
+                    text: '1. Al pasar horas atendiendo en el pasillo, lidiando con que toquen la fruta, ¿cómo te sientes?',
+                    options: [
+                        { val: 5, text: 'Orgulloso de mantener todo ordenado y atender bien' },
+                        { val: 3, text: 'Neutral, es parte del trabajo' },
+                        { val: 1, text: 'Frustrado y estresado por el desorden constante' }
+                    ]
+                },
+                {
+                    id: 'f2', type: 'radio', score: true,
+                    text: '2. ¿Cómo te sientes cuando un cliente te exige cosas imposibles o te habla con un tono que te incomoda?',
+                    options: [
+                        { val: 4, text: 'Mantengo la calma y trato de buscar una solución' },
+                        { val: 2, text: 'Me molesta, pero no lo demuestro' },
+                        { val: 1, text: 'Siento mucha rabia y ganas de dejar todo botado' }
+                    ]
+                },
+                {
+                    id: 'f3', type: 'radio', score: true,
+                    text: '3. Un cliente te exige buscar la fruta "perfecta" entre toda la caja y refunfuña porque nada le sirve. ¿Qué haces?',
+                    options: [
+                        { val: 5, text: 'Lo ayudo con paciencia a elegir lo mejor disponible' },
+                        { val: 2, text: 'Le doy lo primero que agarro para que se vaya' },
+                        { val: 1, text: 'Le contesto que si no le gusta, que no compre' }
+                    ]
+                },
+                {
+                    id: 'f4', type: 'radio', score: true,
+                    text: '4. Cuando ves llegar a un cliente de "mal genio", ¿qué estrategia usas en tu mente para atenderlo?',
+                    options: [
+                        { val: 5, text: 'Respiro hondo y me preparo para ser muy educado' },
+                        { val: 3, text: 'Lo atiendo rápido y sin hablar mucho' },
+                        { val: 1, text: 'Siento que me va a arruinar el día antes de que hable' }
+                    ]
+                },
+                {
+                    id: 'f5', type: 'text',
+                    text: '5. ¿Te ha pasado que un cliente critique agresivamente la fruta o alguien del local te falte al respeto? ¿Cómo te impactó?'
+                },
+                {
+                    id: 'f6', type: 'text',
+                    text: '6. Sinceramente, ¿has perdido la paciencia y sido cortante o brusco con un cliente o compañero? ¿Qué crees que detonó ese estrés?'
+                }
+            ],
+            limpieza: [
+                {
+                    id: 'l1', type: 'radio', score: true,
+                    text: '1. Mientras atiendes las necesidades del local y la gente pasa a tu alrededor, ¿cómo te sientes?',
+                    options: [
+                        { val: 5, text: 'Valorado, sé que mi trabajo es esencial para el local' },
+                        { val: 3, text: 'Normal, cumplo con mi turno' },
+                        { val: 1, text: 'Invisible o tratado como si no existiera' }
+                    ]
+                },
+                {
+                    id: 'l2', type: 'radio', score: true,
+                    text: '2. ¿Cómo te sientes cuando un cliente ensucia lo que acabas de limpiar o te pide las cosas de mala gana?',
+                    options: [
+                        { val: 4, text: 'Lo limpio de nuevo, entiendo que es un lugar de mucho tránsito' },
+                        { val: 2, text: 'Me da mucha molestia, pero no digo nada' },
+                        { val: 1, text: 'Siento que no respetan mi esfuerzo y me da rabia' }
+                    ]
+                },
+                {
+                    id: 'l3', type: 'radio', score: true,
+                    text: '3. Acabas de trapear y un cliente pasa con el carrito sucio o deja caer cáscaras refunfuñando. ¿Qué piensas?',
+                    options: [
+                        { val: 5, text: 'Le recuerdo con amabilidad que tenga cuidado' },
+                        { val: 2, text: 'Pienso que es un malagradecido' },
+                        { val: 1, text: 'Lo ignoro y espero a que se vaya para limpiar' }
+                    ]
+                },
+                {
+                    id: 'l4', type: 'radio', score: true,
+                    text: '4. Cuando ves a un cliente de "mal genio" que ensucia, ¿cómo te acercas a atenderlo o limpiar?',
+                    options: [
+                        { val: 5, text: 'Con respeto, para evitar cualquier conflicto' },
+                        { val: 2, text: 'Lo más rápido posible y de lejos' },
+                        { val: 1, text: 'Con actitud defensiva o de molestia visible' }
+                    ]
+                },
+                {
+                    id: 'l5', type: 'text',
+                    text: '5. ¿Te ha pasado que un cliente te trate como "invisible", te hable mal, o alguien del local no respete tu espacio?'
+                },
+                {
+                    id: 'l6', type: 'text',
+                    text: '6. Sinceramente, ¿has perdido la paciencia y has sido brusco con un cliente (ej. no saludar, limpiar fuerte cerca de él) o con un compañero? ¿Qué lo detonó?'
+                }
+            ]
+        };
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('record-date').valueAsDate = new Date();
+            generateNewID();
+        });
+
+        function generateNewID() {
+            let records = JSON.parse(localStorage.getItem('fruDB') || '[]');
+            let nextNum = records.length + 1;
+            let newID = 'FRU-' + String(nextNum).padStart(3, '0');
+            document.getElementById('record-id').value = newID;
+        }
+
+        // --- RENDERIZADO DE PREGUNTAS ---
+        function loadQuestions() {
+            const role = document.getElementById('role-select').value;
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            document.getElementById('results-section').style.display = 'none';
+
+            if (!role) return;
+
+            const questions = questionsDB[role];
+            questions.forEach(q => {
+                const block = document.createElement('div');
+                block.className = 'question-block active';
+                
+                const title = document.createElement('div');
+                title.className = 'question-title';
+                title.textContent = q.text;
+                block.appendChild(title);
+
+                if (q.type === 'radio') {
+                    const group = document.createElement('div');
+                    group.className = 'radio-group';
+                    q.options.forEach(opt => {
+                        const label = document.createElement('label');
+                        label.className = 'radio-option';
+                        label.innerHTML = `
+                            <input type="radio" name="${q.id}" value="${opt.val}" data-score="${q.score ? opt.val : 0}">
+                            <span>${opt.text}</span>
+                        `;
+                        group.appendChild(label);
+                    });
+                    block.appendChild(group);
+                } else if (q.type === 'text') {
+                    const textarea = document.createElement('textarea');
+                    textarea.name = q.id;
+                    textarea.placeholder = 'Escribe tu respuesta aquí...';
+                    block.appendChild(textarea);
+                }
+
+                container.appendChild(block);
+            });
+        }
+
+        // --- LÓGICA DE NEGOCIO ---
+        function finalizeSurvey() {
+            const role = document.getElementById('role-select').value;
+            if (!role) {
+                alert('Por favor, selecciona un cargo primero.');
+                return;
+            }
+
+            // Calcular puntaje
+            let totalScore = 0;
+            let maxScore = 0;
+            let answeredRadios = 0;
+
+            const inputs = document.querySelectorAll('input[type="radio"]:checked');
+            inputs.forEach(input => {
+                totalScore += parseInt(input.dataset.score);
+                maxScore += 5; // Máximo posible por pregunta
+                answeredRadios++;
+            });
+
+            const questions = questionsDB[role];
+            const radioQuestions = questions.filter(q => q.type === 'radio').length;
+
+            if (answeredRadios < radioQuestions) {
+                alert('Por favor, responde todas las preguntas de selección para poder generar el análisis.');
+                return;
+            }
+
+            const average = (totalScore / (radioQuestions * 5)) * 5; // Escala 1-5
+            
+            // Mostrar resultados
+            const resultsDiv = document.getElementById('results-section');
+            const scoreDisplay = document.getElementById('score-display');
+            const actionList = document.getElementById('action-list');
+            
+            resultsDiv.style.display = 'block';
+            scoreDisplay.textContent = `Puntaje de Bienestar y Resiliencia: ${average.toFixed(1)} / 5.0`;
+
+            // Lógica de Acciones
+            let actions = [];
+            if (average >= 4.0) {
+                scoreDisplay.style.color = 'var(--primary)';
+                actions.push('<li>✅ <strong>Perfil Resiliente:</strong> El trabajador muestra excelente manejo emocional. Considerar asignarle roles de mentoría o apoyo a nuevos ingresos.</li>');
+                actions.push('<li>✅ <strong>Reconocimiento:</strong> Validar públicamente su actitud positiva para reforzar el clima laboral.</li>');
+            } else if (average >= 2.5) {
+                scoreDisplay.style.color = 'var(--warning)';
+                actions.push('<li>⚠️ <strong>Puntos de Fricción:</strong> Hay estrés moderado. Revisar si los detonantes son el entorno (calor, cola) y no la actitud del trabajador.</li>');
+                actions.push('<li>⚠️ <strong>Capacitación:</strong> Ofrecer técnicas breves de "desescalada" y manejo de clientes difíciles.</li>');
+            } else {
+                scoreDisplay.style.color = 'var(--danger)';
+                actions.push('<li>🚨 <strong>Riesgo de Desgaste Emocional:</strong> El trabajador muestra signos de agotamiento o frustración alta.</li>');
+                actions.push('<li>🚨 <strong>Acción Inmediata:</strong> Conversación privada de apoyo (no disciplinaria). Evaluar rotación de tareas o pausas activas.</li>');
+                actions.push('<li>🚨 <strong>Revisión de Entorno:</strong> El problema probablemente sea sistémico (falta de personal, herramientas), no del individuo.</li>');
+            }
+
+            // Analizar respuestas de texto para acciones adicionales
+            const textAnswers = document.querySelectorAll('textarea');
+            let mentionsStress = false;
+            textAnswers.forEach(ta => {
+                if (ta.value.toLowerCase().includes('estrés') || ta.value.toLowerCase().includes('calor') || ta.value.toLowerCase().includes('molesto')) {
+                    mentionsStress = true;
+                }
+            });
+
+            if (mentionsStress) {
+                actions.push('<li>💡 <strong>Nota:</strong> Se detectaron menciones a factores ambientales (calor, estrés). Mejorar condiciones físicas del puesto puede elevar este puntaje.</li>');
+            }
+
+            actionList.innerHTML = actions.join('');
+            
+            // Guardar automáticamente al finalizar
+            saveData(true);
+            
+            // Scroll a resultados
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function saveData(isFinal = false) {
+            const id = document.getElementById('record-id').value;
+            const date = document.getElementById('record-date').value;
+            const role = document.getElementById('role-select').value;
+            
+            if (!role) { alert('Selecciona un cargo'); return; }
+
+            // Recopilar datos
+            let formData = { id, date, role, answers: {}, score: 'N/A' };
+            
+            // Recopilar radios
+            const radios = document.querySelectorAll('input[type="radio"]:checked');
+            let scoreSum = 0;
+            radios.forEach(r => {
+                formData.answers[r.name] = r.nextElementSibling.textContent;
+                scoreSum += parseInt(r.dataset.score);
+            });
+
+            // Recopilar textos
+            const texts = document.querySelectorAll('textarea');
+            texts.forEach(t => {
+                formData.answers[t.name] = t.value;
+            });
+
+            // Calcular puntaje si hay radios
+            const radioCount = questionsDB[role].filter(q => q.type === 'radio').length;
+            if (radioCount > 0 && radios.length === radioCount) {
+                formData.score = ((scoreSum / (radioCount * 5)) * 5).toFixed(1);
+            }
+
+            // Guardar en LocalStorage
+            let db = JSON.parse(localStorage.getItem('fruDB') || '[]');
+            
+            // Si ya existe, actualizar, si no, push
+            const existingIndex = db.findIndex(r => r.id === id);
+            if (existingIndex >= 0) {
+                db[existingIndex] = formData;
+            } else {
+                db.push(formData);
+            }
+
+            localStorage.setItem('fruDB', JSON.stringify(db));
+            
+            if (!isFinal) {
+                alert(`✅ Progreso guardado exitosamente bajo el código: ${id}`);
+            }
+        }
+
+        function editData() {
+            const db = JSON.parse(localStorage.getItem('fruDB') || '[]');
+            if (db.length === 0) {
+                alert('No hay datos guardados para editar.');
+                return;
+            }
+            const lastRecord = db[db.length - 1];
+            
+            document.getElementById('record-id').value = lastRecord.id;
+            document.getElementById('record-date').value = lastRecord.date;
+            document.getElementById('role-select').value = lastRecord.role;
+            
+            loadQuestions();
+            
+            // Rellenar respuestas
+            setTimeout(() => {
+                for (const [key, value] of Object.entries(lastRecord.answers)) {
+                    const radio = document.querySelector(`input[name="${key}"][value]`);
+                    // Buscar el radio que tenga el texto correspondiente (simplificación)
+                    // Mejor: buscar por valor numérico si es radio, o texto si es textarea
+                    const inputs = document.querySelectorAll(`input[name="${key}"]`);
+                    let found = false;
+                    inputs.forEach(inp => {
+                        // Intentar match por texto del label
+                        if (inp.nextElementSibling && inp.nextElementSibling.textContent.trim() === value.trim()) {
+                            inp.checked = true;
+                            found = true;
+                        }
+                    });
+                    
+                    if (!found) {
+                        const textarea = document.querySelector(`textarea[name="${key}"]`);
+                        if (textarea) textarea.value = value;
+                    }
+                }
+                alert('Último registro cargado para edición.');
+            }, 100);
+        }
+
+        function clearForm() {
+            if (confirm('¿Estás seguro de borrar el formulario actual? Se generará un nuevo código.')) {
+                document.getElementById('survey-form').reset();
+                document.getElementById('questions-container').innerHTML = '';
+                document.getElementById('results-section').style.display = 'none';
+                generateNewID();
+                document.getElementById('record-date').valueAsDate = new Date();
+            }
+        }
+
+        // --- ADMIN / BASE DE DATOS ---
+        function toggleAdmin() {
+            const panel = document.getElementById('admin-panel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                const pass = prompt('Ingrese clave de administrador (deja en blanco para "0"):');
+                if (pass === 'admin123' || pass === '') {
+                    renderDB();
+                    panel.style.display = 'block';
+                } else {
+                    alert('Clave incorrecta');
+                }
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function renderDB() {
+            const db = JSON.parse(localStorage.getItem('fruDB') || '[]');
+            const tbody = document.getElementById('db-tbody');
+            tbody.innerHTML = '';
+
+            db.forEach(record => {
+                const tr = document.createElement('tr');
+                
+                // Resumir respuestas de texto para la tabla
+                let textSummary = '';
+                for (const [key, value] of Object.entries(record.answers)) {
+                    if (key.includes('5') || key.includes('6')) { // Preguntas abiertas
+                        textSummary += `<strong>${key}:</strong> ${value.substring(0, 50)}...<br>`;
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td><strong>${record.id}</strong></td>
+                    <td>${record.date}</td>
+                    <td>${record.role.toUpperCase()}</td>
+                    <td style="font-weight:bold; color: ${record.score < 3 ? 'red' : 'green'}">${record.score}</td>
+                    <td style="font-size:12px; max-width: 300px;">${textSummary || 'Sin respuestas abiertas'}</td>
+                    <td>
+                        <button onclick="deleteRecord('${record.id}')" style="padding:5px 10px; font-size:12px; background:#dc3545; color:white;">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteRecord(id) {
+            if (confirm(`¿Eliminar permanentemente el registro ${id}?`)) {
+                let db = JSON.parse(localStorage.getItem('fruDB') || '[]');
+                db = db.filter(r => r.id !== id);
+                localStorage.setItem('fruDB', JSON.stringify(db));
+                renderDB();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ ¿ESTÁS SEGURO? Esto borrará TODAS las encuestas guardadas permanentemente.')) {
+                localStorage.removeItem('fruDB');
+                renderDB();
+                generateNewID();
+                alert('Base de datos eliminada.');
+            }
+        }
+    </script>
+</body>
+</html>
